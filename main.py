@@ -7,6 +7,7 @@ import json
 
 
 def main():
+
     st.title("Udemy Scraper Project")
     with st.sidebar:
         st.title("Udemy Scraper Project")
@@ -41,7 +42,11 @@ def main():
     #         tmp_download_link = export.export_csv(df)
     #         st.markdown(tmp_download_link, unsafe_allow_html=True)
     #         st.json(df.to_json(orient="records"))
-
+    st.markdown("""
+        <style>
+        #MainMenu{visibility: hidden;}
+        footer{visibility: hidden;}
+        </style>""", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
