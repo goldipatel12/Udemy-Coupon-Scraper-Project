@@ -18,7 +18,7 @@ def main():
     with st.sidebar:
         st.title("Udemy Scraper Project")
         with st.form(key='my_form'):
-            site_to_scrape = st.multiselect("Select Websites To Scrape (Select Multiple):", constants.COUPON_WEBSITES)
+            site_to_scrape = st.multiselect("Select Websites To Scrape (Multiple Selection):", constants.COUPON_WEBSITES)
             max_course_count = st.slider("Maximum Number Of Courses To Scrape", 1, 1000, 20, 1)
             days_delta = st.slider("Do Not Collect Coupons More Than 'X' Days Old, Please Select a Value for 'X'", 1, 365, 20, 1)
             max_retries_count = st.slider("Maximum Number Of Retries Per Request", 1, 50, 4, 1)

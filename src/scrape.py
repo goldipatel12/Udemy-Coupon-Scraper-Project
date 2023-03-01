@@ -253,13 +253,13 @@ def scraper(site_to_scrape: list, max_course_count: int, days_delta: int, max_re
                 pagination_r = requests.get(
                     "https://www.real.discount/api-web/all-courses/?store=Udemy&page=1&per_page=40&orderby=date&free=1&editorschoices=0",
                     headers=headers,
-                    timeout=5,
+                    timeout=120,
                 ).json()
             except requests.exceptions.ConnectTimeout:
                 pagination_r = requests.get(
                     "https://www.real.discount/api-web/all-courses/?store=Udemy&page=1&per_page=40&orderby=date&free=1&editorschoices=0",
                     headers=headers,
-                    timeout=5,
+                    timeout=120,
                 ).json()
 
             data_per_page = 100
@@ -281,13 +281,13 @@ def scraper(site_to_scrape: list, max_course_count: int, days_delta: int, max_re
                                 r = requests.get(
                                     f"https://www.real.discount/api-web/all-courses/?store=Udemy&page={page_no}&per_page={data_per_page}&orderby=date&free=1&editorschoices=0",
                                     headers=headers,
-                                    timeout=5,
+                                    timeout=120,
                                 ).json()
                             except requests.exceptions.ConnectTimeout:
                                 r = requests.get(
                                     f"https://www.real.discount/api-web/all-courses/?store=Udemy&page={page_no}&per_page={data_per_page}&orderby=date&free=1&editorschoices=0",
                                     headers=headers,
-                                    timeout=5,
+                                    timeout=120,
                                 ).json()
                             break
                         except Exception:
