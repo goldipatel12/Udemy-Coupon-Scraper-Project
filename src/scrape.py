@@ -199,6 +199,11 @@ def extract_url_without_query_params(url: str) -> str:
 
 # def scraper(site_to_scrape: list, max_course_count: int, creation_date: int, max_retries_count: int) -> List[dict]:
 def scraper(site_to_scrape: list, max_course_count: int, days_delta: int, max_retries_count: int) -> List[dict]:
+    st.markdown("""
+            <style>
+            #MainMenu{visibility: hidden;}
+            footer{visibility: hidden;}
+            </style>""", unsafe_allow_html=True)
     st.info(f"Starting Script with the following settings:    \n>>Website to Scrape: {site_to_scrape}   \n>>Maximum Course Count: {max_course_count}   \n>>Maximum Course Count: {days_delta}   \n>>Maximum Retries Count: {max_retries_count}")
     data = []
     course_count = 0
@@ -232,79 +237,115 @@ def scraper(site_to_scrape: list, max_course_count: int, days_delta: int, max_re
     for site in site_to_scrape:
         print(site)
         if site == "Real Discount":
-            st.warning("Started Scraping: https://www.real.discount/")
+            # st.warning("Started Scraping: https://www.real.discount/")
             rd_big_all = []
             data_dict = {}
             r = {}
+
+            headers = {
+                "User-Agent": "PostmanRuntime/7.30.0",
+                "Host": "www.real.discount",
+                "Connection": "Keep-Alive",
+            }
+
+            # Pagination Request
             try:
-                headers = {
-                    "User-Agent": "PostmanRuntime/7.30.0",
-                    "Host": "www.real.discount",
-                    "Connection": "Keep-Alive",
-                }
-                for i in range(max_retries_count):
-                    try:
-                        time.sleep(0.1)
+                pagination_r = requests.get(
+                    "https://www.real.discount/api-web/all-courses/?store=Udemy&page=1&per_page=40&orderby=date&free=1&editorschoices=0",
+                    headers=headers,
+                    timeout=5,
+                ).json()
+            except requests.exceptions.ConnectTimeout:
+                pagination_r = requests.get(
+                    "https://www.real.discount/api-web/all-courses/?store=Udemy&page=1&per_page=40&orderby=date&free=1&editorschoices=0",
+                    headers=headers,
+                    timeout=5,
+                ).json()
+
+            data_per_page = 100
+            if pagination_r:
+                entry_count = int(pagination_r["count"])
+                total_pages = (entry_count//data_per_page) + 1
+
+            else:
+                total_pages = 7
+            st.warning(f"Started Scraping: https://www.real.discount/    \n>> Total Page Count {total_pages}")
+            for page_no in range(1, total_pages+1):
+                if course_count >= max_course_count:
+                    break
+                try:
+                    st.warning(f"Scraping Page: {page_no}/{total_pages} of https://www.real.discount/ for courses")
+                    for i in range(max_retries_count):
                         try:
-                            r = requests.get(
-                                "https://www.real.discount/api-web/all-courses/?store=Udemy&page=1&per_page=40&orderby=date&free=1&editorschoices=0",
-                                headers=headers,
-                                timeout=5,
-                            ).json()
-                        except requests.exceptions.ConnectTimeout:
-                            r = requests.get(
-                                "https://www.real.discount/api-web/all-courses/?store=Udemy&page=1&per_page=40&orderby=date&free=1&editorschoices=0",
-                                headers=headers,
-                                timeout=5,
-                            ).json()
-                        break
-                    except Exception:
-                        continue
-                print(r)
-                if r:
-                    rd_big_all.extend(r["results"])
+                            try:
+                                r = requests.get(
+                                    f"https://www.real.discount/api-web/all-courses/?store=Udemy&page={page_no}&per_page={data_per_page}&orderby=date&free=1&editorschoices=0",
+                                    headers=headers,
+                                    timeout=5,
+                                ).json()
+                            except requests.exceptions.ConnectTimeout:
+                                r = requests.get(
+                                    f"https://www.real.discount/api-web/all-courses/?store=Udemy&page={page_no}&per_page={data_per_page}&orderby=date&free=1&editorschoices=0",
+                                    headers=headers,
+                                    timeout=5,
+                                ).json()
+                            break
+                        except Exception:
+                            continue
+                    print(r)
+                    if r:
+                        rd_big_all.extend(r["results"])
 
-                    rd_length = len(rd_big_all)
-                    for index, item in enumerate(rd_big_all):
-                        print("000000000000")
-                        print(item)
-                        print(course_count)
-                        print(max_course_count)
-                        if item["type"] == "Normal":
-                            if course_count < max_course_count:
-                                rd_progress = index
-                                course_title = item["name"]
-                                link = item["url"]
-                                expiration_date = item["sale_end"]
-                                start_date_str = item["sale_start"].rstrip()
-                                date_obj = datetime.strptime(start_date_str, '%a, %d %b %Y %H:%M:%S %Z').date()
-                                if last_coupon_date <= date_obj:
-                                    if link.startswith("https://click.linksynergy.com"):
-                                        try:
-                                            link = link.split("murl=")[1]
-                                        except:
-                                            continue
+                        rd_length = len(rd_big_all)
+                        for index, item in enumerate(rd_big_all):
+                            print("000000000000")
+                            print(item)
+                            print(course_count)
+                            print(max_course_count)
+                            if item["type"] == "Normal":
+                                if course_count < max_course_count:
+                                    rd_progress = index
+                                    course_title = item["name"]
+                                    link = item["url"]
+                                    expiration_date = item["sale_end"]
+                                    start_date_str = item["sale_start"].rstrip()
+                                    date_obj = datetime.strptime(start_date_str, '%a, %d %b %Y %H:%M:%S %Z').date()
+                                    if last_coupon_date <= date_obj:
+                                        if link.startswith("https://click.linksynergy.com"):
+                                            try:
+                                                link = link.split("murl=")[1]
+                                            except:
+                                                continue
 
-                                    course_link = extract_url_without_query_params(link)
-                                    coupon_code = extract_course_coupon(link)
+                                        course_link = extract_url_without_query_params(link)
+                                        coupon_code = extract_course_coupon(link)
 
-                                    course_id = get_course_id(link)
-                                    amount, coupon_valid = udemy.check_course(course_id=course_id, coupon_id=coupon_code)
-                                    print("------")
-
-                                    if coupon_valid:
                                         data_dict["course_title"] = course_title
                                         data_dict["course_link"] = course_link
                                         data_dict["coupon_code"] = coupon_code
                                         data_dict["expiration_date"] = expiration_date
-                                        data.append(data_dict)
-                                        data_dict = {}
-                                        course_count = course_count + 1
-            except:
-                rd_error = traceback.format_exc()
-                rd_length = -1
-                rd_done = True
-                print(rd_error)
+
+                                        st.success('Successfully fetched course, details:')
+                                        st.json(data_dict)
+
+                                        course_id = get_course_id(link)
+                                        st.warning('Validating above coupon code On Udemy')
+                                        amount, coupon_valid = udemy.check_course(course_id=course_id, coupon_id=coupon_code)
+                                        print("------")
+
+                                        if coupon_valid:
+                                            st.success('Successfully validated course coupon code on Udemy, Enqueuing Course!')
+                                            data.append(data_dict)
+                                            data_dict = {}
+                                            course_count = course_count + 1
+                                        else:
+                                            st.error('Invalid coupon code, not Enqueuing course!')
+
+                except:
+                    rd_error = traceback.format_exc()
+                    rd_length = -1
+                    rd_done = True
+                    print(rd_error)
         elif site == "999 Course Sale":
             st.warning("Started Scraping: https://999coursesale.com")
             cs_big_all = []
@@ -317,7 +358,6 @@ def scraper(site_to_scrape: list, max_course_count: int, days_delta: int, max_re
                 }
                 for i in range(max_retries_count):
                     try:
-                        time.sleep(0.1)
                         try:
                             r = requests.get(
                                 "https://999coursesale.com/freebie-courses-list.php?pd12=free-v5-ret-orig-2-udemy-ans-no&orig_utm_content=&orig_utm_medium=&orig_utm_campaign=&utm_source=nonzu&_redir=",
@@ -371,6 +411,72 @@ def scraper(site_to_scrape: list, max_course_count: int, days_delta: int, max_re
                 cs_error = traceback.format_exc()
                 cs_length = -1
                 cs_done = True
+
+        elif site == "Course King":
+            ck_big_all = []
+            data_dict = {}
+            r = {}
+            try:
+                head = {
+                    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36 Edg/92.0.902.84",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                }
+                for i in range(max_retries_count):
+                    try:
+                        try:
+                            r = requests.get(
+                                "https://courseking.org/freebie-courses-list.php?orig_utm_content=&orig_utm_medium=&orig_utm_campaign=&utm_source=nonzu&_redir=",
+                                headers=head
+                                )
+                        except requests.exceptions.ConnectTimeout:
+                            r = requests.get(
+                                "https://courseking.org/freebie-courses-list.php?orig_utm_content=&orig_utm_medium=&orig_utm_campaign=&utm_source=nonzu&_redir=",
+                                headers=head
+                            )
+                        break
+                    except Exception:
+                        continue
+
+                # print(r)
+                if r:
+                    soup = bs(r.content, "html.parser")
+                    # print(r.content)
+                    ck_small_all = soup.find_all("div", {"class": "mt-3 text-center"})
+                    ck_big_all.extend(ck_small_all)
+                    ck_length = len(ck_big_all)
+                    for index, item in enumerate(ck_big_all):
+                        cs_progress = index
+                        a_tag = item.select("a")[0]
+                        onclick_fn = str(a_tag.get('onclick'))
+                        # print(onclick_fn)
+                        sep = "'"
+                        onclick_list = onclick_fn.split(sep)
+                        course_link = onclick_list[1]
+                        coupon_code = onclick_list[3]
+                        print(course_link)
+                        print(coupon_code)
+                        course_title = a_tag.find("h3", {"class": "heading"}).string
+                        print("2222222")
+                        print(course_title)
+                        expiration_date = item.find("span", {"class": "text2"}).string
+                        print(expiration_date)
+                        course_id = get_course_id(course_link)
+                        amount, coupon_valid = udemy.check_course(course_id=course_id, coupon_id=coupon_code)
+
+                        if coupon_valid:
+                            data_dict["course_title"] = course_title
+                            data_dict["course_link"] = course_link
+                            data_dict["coupon_code"] = coupon_code
+                            data_dict["expiration_date"] = expiration_date
+                            data.append(data_dict)
+                            data_dict = {}
+                            course_count = course_count + 1
+
+            except:
+                ck_error = traceback.format_exc()
+                ck_length = -1
+                ck_done = True
+
     return data
 
 
