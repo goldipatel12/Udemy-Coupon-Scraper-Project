@@ -210,7 +210,10 @@ def scraper(site_to_scrape: list, max_course_count: int, days_delta: int, max_re
                  {"email": "dmuddeshya@gmail.com", "password": "Uddeshya@pwd"},
                  {"email": "uddeshya.us@gmail.com", "password": "Uddeshya@2023"},
                  {"email": "Poojasinghsengar.1001@gmail.com", "password": "Uddeshya@2023"},
-                 {"email": "Sengar101998@gmail.com", "password": "Uddeshya@2023"}]
+                 {"email": "Sengar101998@gmail.com", "password": "Uddeshya@2023"},
+                 {"email": "yashwantipatel1978@gmail.com", "password": "Yash@989335"},
+                 {"email": "sigone4432@wiroute.com", "password": "Amit@9893355"},
+                 {"email": "eygrvm@eurokool.com", "password": "Goldi@098765"}]
 
     udemy = Udemy()
     login_error = True
