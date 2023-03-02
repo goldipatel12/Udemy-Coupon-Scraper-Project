@@ -66,17 +66,12 @@ class Udemy:
 
         r = self.client.get(url).json()
         print(r)
-
-        try:
-            amount = r["purchase"]["data"]["list_price"]["amount"]
-        except KeyError:
-            print(r)
         coupon_valid = False
         if coupon_id:
             if r["redeem_coupon"]["discount_attempts"][0]["status"] == "applied":
                 coupon_valid = True
 
-        return Decimal(amount), coupon_valid
+        return coupon_valid
 
     def manual_login(self, email: str, password: str):
 
@@ -165,11 +160,13 @@ def get_course_id(url: str):
     r = requests.get(url)
     soup = bs(r.content, "html.parser")
     try:
-        course_id = (
-            soup.find("meta", {"itemprop": "image"})["content"]
-            .split("/")[5]
-            .split("_")[0]
-        )
+        meta_image = soup.find("meta", {"itemprop": "image"})
+        if meta_image:
+            course_id = (
+                meta_image["content"].split("/")[5].split("_")[0]
+            )
+        else:
+            course_id = ""
     except IndexError:
         course_id = ""
     return course_id
@@ -297,6 +294,9 @@ def scraper(site_to_scrape: list, max_course_count: int, days_delta: int, max_re
                         rd_big_all.extend(r["results"])
 
                         rd_length = len(rd_big_all)
+                        print(77777777)
+                        print(rd_length)
+                        print(77777777)
                         for index, item in enumerate(rd_big_all):
                             print("000000000000")
                             print(item)
@@ -307,9 +307,10 @@ def scraper(site_to_scrape: list, max_course_count: int, days_delta: int, max_re
                                     rd_progress = index
                                     course_title = item["name"]
                                     link = item["url"]
-                                    expiration_date = item["sale_end"]
+                                    expiration_date_str = item["sale_end"]
                                     start_date_str = item["sale_start"].rstrip()
                                     date_obj = datetime.strptime(start_date_str, '%a, %d %b %Y %H:%M:%S %Z').date()
+                                    expiration_date = datetime.strptime(start_date_str, '%a, %d %b %Y %H:%M:%S %Z').strftime("%-m/%-d/%-y")
                                     if last_coupon_date <= date_obj:
                                         if link.startswith("https://click.linksynergy.com"):
                                             try:
@@ -330,7 +331,7 @@ def scraper(site_to_scrape: list, max_course_count: int, days_delta: int, max_re
 
                                         course_id = get_course_id(link)
                                         st.warning('Validating above coupon code On Udemy')
-                                        amount, coupon_valid = udemy.check_course(course_id=course_id, coupon_id=coupon_code)
+                                        coupon_valid = udemy.check_course(course_id=course_id, coupon_id=coupon_code)
                                         print("------")
 
                                         if coupon_valid:
@@ -406,7 +407,7 @@ def scraper(site_to_scrape: list, max_course_count: int, days_delta: int, max_re
 
                             course_id = get_course_id(course_link)
                             st.warning('Validating above coupon code On Udemy')
-                            amount, coupon_valid = udemy.check_course(course_id=course_id, coupon_id=coupon_code)
+                            coupon_valid = udemy.check_course(course_id=course_id, coupon_id=coupon_code)
 
                             if coupon_valid:
                                 st.success('Successfully validated course coupon code on Udemy, Enqueuing Course!')
@@ -481,7 +482,7 @@ def scraper(site_to_scrape: list, max_course_count: int, days_delta: int, max_re
 
                             course_id = get_course_id(course_link)
                             st.warning('Validating above coupon code On Udemy')
-                            amount, coupon_valid = udemy.check_course(course_id=course_id, coupon_id=coupon_code)
+                            coupon_valid = udemy.check_course(course_id=course_id, coupon_id=coupon_code)
 
                             if coupon_valid:
                                 st.success('Successfully validated course coupon code on Udemy, Enqueuing Course!')
